@@ -1,0 +1,10 @@
+div#right-panel{padding-top: 0px;}
+div#left-panel{float:none; width: 100%; padding:0px; overflow:visible; height: 100%; font-size: 10px;}
+.sc-player{
+  width: 80%;
+  height: 65px;
+  margin: 0 0 40px 0;
+  padding: 2px 0 0px 0;
+}
+.sc-trackslis{padding: 0; margin: 0;}
+div#soundcloud-link, div#info{display: none;}

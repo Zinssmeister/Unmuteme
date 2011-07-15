@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>unmuteme.com</title>
+<meta name="description" content="unmuteme.com let's you listen to tweets" /> 
+<meta name="author" content="Bjoern Zinssmeister"> 
+
+
+
+
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="stylesheet" href="sc-player-skin.css" type="text/css" />
+
+<style type="text/css">
+
+    ::-webkit-scrollbar {
+	    width: 12px;
+	}
+	
+	::-webkit-scrollbar-track {
+	    -webkit-box-shadow: inset 0 0 1px rgba(0,0,0,0.1);
+	}
+	
+	::-webkit-scrollbar-thumb {
+	    border-radius: 10px;
+	    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	}
+
+   body{font-family: Verdana, Arial, Helvetica; margin: 0px; padding: 0px;}
+   div#topBar{background: #bd1701; margin: 0px; padding: 15px;}
+   div#topBar h1{color: #fff; font-weight: normal; font-size: 15px;margin: 0px; padding: 0px; width: 258px; height: 49px; background:url('unmuteme-logo.jpg') no-repeat; text-indent: -5000px}
+
+   div#currentTrack{text-align: right;}
+   div#left-panel{float:left; width: 50%; padding-left: 10px; overflow: auto; height: 400px;}
+   div#right-panel{float:left; width: 45%; padding-left:25px; padding-top: 20px;overflow: hidden;}
+   ul#world-playlist img{margin-right: 10px; border: none;}
+   ul#world-playlist{margin: 0px; padding: 0px; cursor: pointer;}
+   ul#world-playlist li{list-style: none; cursor: pointer; padding: 10px;}
+   ul#world-playlist li:hover{background: #eee;}
+   
+   div#soundcloud-link{margin-top: 110px;}
+   div#soundcloud-link img{margin-top: 4px;}
+   div#soundcloud-link a{font-size: 10px; color: #505050; text-decoration: none;}
+   div#soundcloud-link a:hover{text-decoration: underline;}
+   
+   ul#my-playlist{padding: 0; margin: 0;}
+   div#info{font-size: 11px; padding-top: 160px; text-align: right;}
+</style>
+
+<!-- Start iPhone stuff -->
+<link rel="stylesheet" type="text/css" media="only screen and (max-device-width: 480px)" href="iphone.css" />
+<link
+    rel="stylesheet"
+    type="text/css"
+    href="iphone.css"
+    media="only screen and (-webkit-min-device-pixel-ratio: 2)"
+/>
+<meta name="viewport" content="width=device-width" />
+<!-- End iPhone stuff -->
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-1980401-15']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body><div id="topBar"><h1>unmuteme.com</h1></div>
+<div id="mobile-panel" style="display:none;"></div>
+
+
+<div id="left-panel"><ul id="world-playlist"></ul></div>
+<div id="right-panel">
+
+	<div id="currentTrack">Select a tweet to unmute it...</div>
+	<ul id="my-playlist">
+		<div></div>
+	</ul>
+	<div id="info">&copy; 2011 Bjoern Zinssmeister, follow me <a href="http://www.twitter.com/zinssmeister" target="_blank">@zinssmeister</a></div>
+</div>
+
+
+
+
+
+
+
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.min.js"></script>
+<script type="text/javascript" src="loadtweets.js"></script>
+<script type="text/javascript" src="soundcloud.player.api.js"></script>
+<script type="text/javascript" src="sc-player.js"></script>
+
+<script type="text/javascript">
+// Return boolean TRUE/FALSE
+function isiPhone(){
+    return (
+        (navigator.platform.indexOf("iPhone") != -1) ||
+        (navigator.platform.indexOf("iPod") != -1)
+    );
+}
+
+
+var height = $(document).height() - 100;
+$('#left-panel').css('height', height)
+
+$(window).resize(function() {
+ if(!isiPhone()){
+ 	var height = $(document).height() - 100;
+ 	$('#left-panel').css('height', height)
+ }
+});
+
+if(isiPhone()){
+$('#mobile-panel').html($('#right-panel').html());
+$('#mobile-panel').css('display', 'block');
+$('#right-panel').html('');
+$('#right-panel').css('display', 'none');
+}
+
+
+/* Quick function to clean up the string, remove special chars and urls from status updates
+ *
+ */
+function cleanupString(text) {
+  text = text.replace(/#nowplaying/gi, ""); //remove nowplaying string
+  var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+  text = text.replace(exp,""); 
+  return text.replace(/[^a-zA-Z 0-9]+/g,'') //remove all special characters
+}
+
+$('#world-playlist li').live('click', function(){
+	var statusText = $(this).find('.status-txt').html();
+	var sc_clientId = "W5GJ2HboMYoNRNDWehgFiQ";
+
+	statusText = cleanupString(statusText);
+	$('#my-playlist').html('<div style="text-align:center;"><img src="loading.gif" alt="loading" /></div>')
+	$('#currentTrack').html('');
+	
+	$.getJSON("http://api.soundcloud.com/tracks.json?client_id=" + sc_clientId +"&q=" + statusText,function(response) {
+		if(response.length > 0){
+			songPermalink = response[0].permalink_url;
+			songTitle = response[0].title
+			$('#currentTrack').html(''); //clear the select a tweet message
+			$('#my-playlist').html('<div></div>');
+			$('#my-playlist div').scPlayer({
+				links: [{url: songPermalink, title: songTitle, clientId: sc_clientId, autoPlay: true}]
+			});
+			$('#my-playlist').append('<div id="soundcloud-link"><img src="soundcloud-icon.jpg" alt="soundcloud" /> <a href="'+ response[0].permalink_url + '" target="_blank">'+response[0].permalink_url+'</a></div>');
+			
+			 document.title = songTitle + " / unmuteme.com";
+			
+		}else{
+			$('#my-playlist').html("<div>Sorry but I couldn't find a match for this status on soundcloud :(</div>");
+			
+		} 
+
+	});
+});
+
+loadTweets("nowplaying"); //initial call on page load
+setInterval('loadTweets("nowplaying")', 10000); //interval to keep loading new results
+</script>
+
+</body>
+</html>
